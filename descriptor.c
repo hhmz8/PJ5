@@ -21,6 +21,7 @@ void initDescriptor(struct shmseg* shmp, int resourceSize, int processSize){
 	}
 }
 
+// Allocate resources for a process
 void allocateResource(struct shmseg* shmp, int request[], int resourceSize, int processSize, int processIndex){
 	int i;
 	for (i = 0; i < resourceSize; i++){
@@ -29,6 +30,7 @@ void allocateResource(struct shmseg* shmp, int request[], int resourceSize, int 
 	setAllocationVector(shmp, resourceSize, processSize);
 }
 
+// Free resources for a process 
 void freeResource(struct shmseg* shmp, int resourceSize, int processSize, int processIndex){
 	int i;
 	for (i = 0; i < resourceSize; i++){
@@ -37,6 +39,7 @@ void freeResource(struct shmseg* shmp, int resourceSize, int processSize, int pr
 	setAllocationVector(shmp, resourceSize, processSize);
 }
 
+// Sets a randomized resource request
 void setRequest(struct shmseg* shmp, int resourceSize){
 	int i;
 	int max;
@@ -48,6 +51,7 @@ void setRequest(struct shmseg* shmp, int resourceSize){
 	}
 }
 
+// Sets the allocation vector based on the matrix
 void setAllocationVector(struct shmseg* shmp, int resourceSize, int processSize){
 	int i, j;
 	int sum;
@@ -61,6 +65,7 @@ void setAllocationVector(struct shmseg* shmp, int resourceSize, int processSize)
 	}
 }
 
+// Check if resource request is valid
 int isRequestValid(struct shmseg* shmp, int request[], int size){
 	int i;
 	for (i = 0; i < size; i++){
