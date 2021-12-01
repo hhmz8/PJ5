@@ -59,10 +59,30 @@ int isRequestValid(struct shmseg* shmp, int request[], int size){
 	return 0;
 }
 
-// Debug
-void printDescriptor(struct shmseg* shmp, int size){
-	int i;
-	for (i = 0; i < size; i++){
-		printf("%d\n",shmp->resourceDescriptor.resourceVector[i]);
+// Debug, prints allocated resources
+void printDescriptor(struct shmseg* shmp, int resourceSize, int processSize){
+	int i, j;
+	int shortSize = resourceSize;
+	int resource;
+	for (i = 0; i < shortSize; i++){
+		if (i < 10){
+			printf("  R%d",i);
+		}
+		else {
+			printf(" R%d",i);
+		}
+	}
+	printf("\n");
+	for (i = 0; i < processSize; i++){
+		for (j = 0; j < shortSize; j++){
+			resource = shmp->resourceDescriptor.allocationMatrix[i][j];
+			if (resource < 10){
+				printf("   %d",resource);
+			}
+			else {
+				printf("  %d",resource);
+			}
+		}
+		printf("\n");
 	}
 }

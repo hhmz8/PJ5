@@ -9,6 +9,6 @@ void freeResource(struct shmseg* shmp, int resourceSize, int processSize, int pr
 void setAllocationVector(struct shmseg* shmp, int resourceSize, int processSize);
 int isRequestValid(struct shmseg* shmp, int request[], int size);
 
-void printDescriptor(struct shmseg* shmp, int size);
+void printDescriptor(struct shmseg* shmp, int resourceSize, int processSize);
 
 #endif

@@ -72,7 +72,7 @@ int main(int argc, char** argv) {
 	// Shm Init 
 	initshmobj(shmobj());
 	initDescriptor(shmobj(),RES_SIZE,MAX_PRO);
-	printDescriptor(shmobj(),RES_SIZE);
+	printDescriptor(shmobj(),RES_SIZE,MAX_PRO);
 	
 	struct shmseg *shmp;
     int shmid = shmget(SHM_KEY, BUF_SIZE, 0666|IPC_CREAT);
