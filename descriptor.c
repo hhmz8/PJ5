@@ -29,6 +29,14 @@ void allocateResource(struct shmseg* shmp, int request[], int resourceSize, int 
 	setAllocationVector(shmp, resourceSize, processSize);
 }
 
+void freeResource(struct shmseg* shmp, int resourceSize, int processSize, int processIndex){
+	int i;
+	for (i = 0; i < resourceSize; i++){
+		shmp->resourceDescriptor.allocationMatrix[processIndex][i] = 0;
+	}
+	setAllocationVector(shmp, resourceSize, processSize);
+}
+
 void setAllocationVector(struct shmseg* shmp, int resourceSize, int processSize){
 	int i, j;
 	int sum;
