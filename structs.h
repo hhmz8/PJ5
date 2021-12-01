@@ -20,6 +20,7 @@ struct descriptor {
 	int allocationVector[RES_SIZE];
 	int requestMatrix[MAX_PRO][RES_SIZE];
 	int allocationMatrix[MAX_PRO][RES_SIZE];
+	int request[RES_SIZE];
 };
 
 // Process control block

@@ -37,6 +37,17 @@ void freeResource(struct shmseg* shmp, int resourceSize, int processSize, int pr
 	setAllocationVector(shmp, resourceSize, processSize);
 }
 
+void setRequest(struct shmseg* shmp, int resourceSize){
+	int i;
+	int max;
+	time_t t;
+	srand((unsigned) time(&t));
+	for (i = 0; i < resourceSize; i++){
+		max = shmp->resourceDescriptor.resourceVector[i];
+		shmp->resourceDescriptor.request[i] = (rand() % (max + 1));
+	}
+}
+
 void setAllocationVector(struct shmseg* shmp, int resourceSize, int processSize){
 	int i, j;
 	int sum;
