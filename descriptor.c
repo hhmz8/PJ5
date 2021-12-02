@@ -19,6 +19,7 @@ void initDescriptor(struct shmseg* shmp, int resourceSize, int processSize){
 			shmp->resourceDescriptor.allocationMatrix[i][j] = 0;
 		}
 	}
+	setAllocationVector(shmp, resourceSize, processSize);
 }
 
 // Allocate resources for a process
@@ -60,7 +61,7 @@ void setAllocationVector(struct shmseg* shmp, int resourceSize, int processSize)
 		for (j = 0; j < processSize; j++){
 			sum += shmp->resourceDescriptor.allocationMatrix[i][j];
 		}
-		sum -= shmp->resourceDescriptor.resourceVector[i];
+		sum = shmp->resourceDescriptor.resourceVector[i] - sum;
 		shmp->resourceDescriptor.allocationVector[i] = sum;
 	}
 }

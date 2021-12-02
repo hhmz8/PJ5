@@ -69,11 +69,6 @@ int main(int argc, char** argv) {
 	fclose(fptr);
 	fptr = fopen(logName, "a");
 	
-	// Shm Init 
-	initshmobj(shmobj());
-	initDescriptor(shmobj(),RES_SIZE,MAX_PRO);
-	printDescriptor(shmobj(),RES_SIZE,MAX_PRO);
-	
 	struct shmseg *shmp;
     int shmid = shmget(SHM_KEY, BUF_SIZE, 0666|IPC_CREAT);
 	if (shmid == -1) {
@@ -81,6 +76,18 @@ int main(int argc, char** argv) {
 		exit(-1);
 	}
 	shmp = shmat(shmid, 0, 0);
+	
+	// Shm Init 
+	initshmobj(shmp);
+	initDescriptor(shmp,RES_SIZE,MAX_PRO);
+	
+	setRequest(shmp, RES_SIZE);
+	if (isRequestValid(shmp, shmp->resourceDescriptor.request, RES_SIZE) == 0){
+		allocateResource(shmp, shmp->resourceDescriptor.request, RES_SIZE, MAX_PRO, 0);
+		printDescriptor(shmp,RES_SIZE,MAX_PRO);
+	}
+	else
+		printf("Resource unavaliable.\n");
 	
 	// Main loop
 	while(1){

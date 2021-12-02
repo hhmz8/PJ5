@@ -16,7 +16,7 @@ userprocess.c
 #include <unistd.h> //sleep
 #include "structs.h"
 
-#define MAX_NS 50000000 // Max run time in NS 
+#define MAX_NS 50000000 // Max wait time between requests
 
 // Reference: https://www.tutorialspoint.com/c_standard_library/c_function_rand.htm
 int main(int argc, char** argv){
