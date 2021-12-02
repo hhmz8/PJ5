@@ -5,6 +5,7 @@
 #define MSG_KEY 806041
 #define RES_SIZE 20
 #define MAX_PRO 18
+#define LOGFILE "logfile"
 
 struct clock {
 	int clockSecs;
@@ -39,6 +40,7 @@ struct shmseg {
 
 struct msgbuf {
 	long mtype;
+	int pid;
 } msg_t;
 
 #endif

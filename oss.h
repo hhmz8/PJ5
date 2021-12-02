@@ -6,7 +6,7 @@ runsim.h
 
 #ifndef OSS_H
 #define OSS_H
-#define TOTAL_PRO 3
+#define TOTAL_PRO 40
 
 void logexit();
 void sigint_parent(int sig);
@@ -18,10 +18,10 @@ void child();
 void deallocate();
 
 void incrementClockShm(struct shmseg* shmp, int incS, int incNS);
-int isClockLarger(struct clock clockA, struct clock clockB);
 
 struct shmseg* shmobj();
 void initshmobj(struct shmseg* shmp);
 
+int getPidIndex(struct shmseg* shmp, int pid);
 
 #endif

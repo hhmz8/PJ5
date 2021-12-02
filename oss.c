@@ -20,6 +20,7 @@ oss.c
 #include "queue.c"
 #include "structs.h"
 #include "descriptor.c"
+#include "clock.c"
 #include "oss.h"
 
 // Reference: https://www.tutorialspoint.com/inter_process_communication/inter_process_communication_shared_memory.htm
@@ -40,18 +41,11 @@ int main(int argc, char** argv) {
 	const int maxTimeBetweenNewProcsNS = 50000000;
 	
 	// Statistics
-	int processNum = 0, idle = 1;
-	
-	// Message queue init
-	int msgid = msgget(MSG_KEY, 0666 | IPC_CREAT);
-	if (msgid == -1) {
-		perror("Error: msgget");
-		exit(-1);
-	}
+	int processNum = 0, idle = 1, allocations = 0;
 	
 	FILE* fptr;
 	int i;
-	int pid = 1, status = 0;
+	int pid = 1, pidIndex = 0;
 	struct clock tempClock = {0, 0};
 	struct clock lastNewProcessTime = {0, 0};
 	time_t t;
@@ -62,13 +56,14 @@ int main(int argc, char** argv) {
 	initQueue(waitQueue, MAX_PRO);
 	
 	logName = malloc(200);
-	logName = "logfile";
+	logName = LOGFILE;
 	
 	// Clear log file
 	fptr = fopen(logName, "w");
 	fclose(fptr);
 	fptr = fopen(logName, "a");
 	
+	// Shm Init 
 	struct shmseg *shmp;
     int shmid = shmget(SHM_KEY, BUF_SIZE, 0666|IPC_CREAT);
 	if (shmid == -1) {
@@ -77,17 +72,20 @@ int main(int argc, char** argv) {
 	}
 	shmp = shmat(shmid, 0, 0);
 	
-	// Shm Init 
 	initshmobj(shmp);
 	initDescriptor(shmp,RES_SIZE,MAX_PRO);
 	
-	setRequest(shmp, RES_SIZE);
-	if (isRequestValid(shmp, shmp->resourceDescriptor.request, RES_SIZE) == 0){
-		allocateResource(shmp, shmp->resourceDescriptor.request, RES_SIZE, MAX_PRO, 0);
-		printDescriptor(shmp,RES_SIZE,MAX_PRO);
+	// Message queue init
+	int msgid = msgget(MSG_KEY, 0666 | IPC_CREAT);
+	if (msgid == -1) {
+		perror("Error: msgget");
+		exit(-1);
 	}
-	else
-		printf("Resource unavaliable.\n");
+
+	/*
+	freeResource(shmp, RES_SIZE, MAX_PRO, 0);
+	printDescriptor(fptr,shmp,RES_SIZE,MAX_PRO);
+	*/
 	
 	// Main loop
 	while(1){
@@ -130,24 +128,84 @@ int main(int argc, char** argv) {
 				// Store pid to process table, dispatch it
 				printf("Child %d forked at %d:%d.\n", pid, shmp->ossclock.clockSecs, shmp->ossclock.clockNS);
 				shmp->processTable[i].processPid = pid;
-				msg_t.mtype = pid;
-				msgsnd(msgid, &msg_t, sizeof(msg_t), 0);
-				msgrcv(msgid, &msg_t, sizeof(msg_t), 1, 0);
+				
+				//msg_t.mtype = pid;
+				//msgsnd(msgid, &msg_t, sizeof(msg_t), 0);
+				//msgrcv(msgid, &msg_t, sizeof(msg_t), 1, 0);
+				
 				idle = 0;
 				break;
 			}
 		}
 		
-		// Check if no action was taken, increment system clock by a small amount
-		if (idle == 1 && !(processNum >= TOTAL_PRO)){
+		// Check if wait queue has items
+		if ((pid = dequeue(waitQueue, MAX_PRO)) != -1){
+			pidIndex = getPidIndex(shmp, pid);
+			if (allocateForProcess(shmp, RES_SIZE, MAX_PRO, pidIndex) != 0){
+				printf("Putting P%d to wait queue at time %d:%d.\n", pidIndex, shmp->ossclock.clockSecs, shmp->ossclock.clockNS);
+				if (enqueue(waitQueue, MAX_PRO, pid) != 0){
+					perror("Error: enqueue");
+					exit(-1);
+				}
+			}
+			else {
+				msg_t.mtype = pid;
+				msgsnd(msgid, &msg_t, sizeof(msg_t), 0);
+				allocations++;
+				if (allocations == 20){
+					allocations = 0;
+					printDescriptor(fptr,shmp, RES_SIZE, MAX_PRO);
+				}
+			}
+		} 
+		
+		// Check for resource allocation requests
+		if (msgrcv(msgid, &msg_t, sizeof(msg_t), 1, IPC_NOWAIT) != -1){
+			pidIndex = getPidIndex(shmp, msg_t.pid);
+			if (allocateForProcess(shmp, RES_SIZE, MAX_PRO, pidIndex) != 0){
+				printf("Putting P%d to wait queue at time %d:%d.\n", pidIndex, shmp->ossclock.clockSecs, shmp->ossclock.clockNS);
+				if (enqueue(waitQueue, MAX_PRO, msg_t.pid) != 0){
+					perror("Error: enqueue");
+					exit(-1);
+				}
+			}
+			else {
+				msg_t.mtype = msg_t.pid;
+				msgsnd(msgid, &msg_t, sizeof(msg_t), 0);
+				allocations++;
+				if (allocations == 20){
+					allocations = 0;
+					printDescriptor(fptr,shmp, RES_SIZE, MAX_PRO);
+				}
+			}
+		}
+		
+		// Check for resource freeing requests
+		if (msgrcv(msgid, &msg_t, sizeof(msg_t), 2, IPC_NOWAIT) != -1){
+			pidIndex = getPidIndex(shmp, msg_t.pid);
+			freeResource(shmp, RES_SIZE, MAX_PRO, pidIndex);
+			printf("Freed resources from P%d.\n", pidIndex);
+			msg_t.mtype = msg_t.pid;
+			msgsnd(msgid, &msg_t, sizeof(msg_t), 0);
+			//printDescriptor(fptr,shmp,RES_SIZE,MAX_PRO);
+		}
+		
+		// Check if no process was made, increment system clock by a small amount
+		if (idle == 1){
 			tempClock.clockSecs = 0;
-			tempClock.clockNS = 50000000;
-			incrementClockShm(shmobj(), tempClock.clockSecs,  tempClock.clockNS);
+			tempClock.clockNS = 4000000;
+			incrementClockShm(shmp, tempClock.clockSecs,  tempClock.clockNS);
+			//printf("...\n");
 		}
 		
 		// Check if oss is due for termination
 		if (processNum >= TOTAL_PRO){
-			if (waitpid(0, &status, WNOHANG) < 1){
+			for (i = 0; i < MAX_PRO; i++){
+				if (shmp->processTable[i].processPid > 0){
+					break;
+				}
+			}
+			if (i == MAX_PRO){
 				fclose(fptr);
 				logexit();
 				return 0;
@@ -269,18 +327,14 @@ void incrementClockShm(struct shmseg* shmp, int incS, int incNS){
 	}
 }
 
-// Check if clockA is larger than clockB
-int isClockLarger(struct clock clockA, struct clock clockB){
-	if (clockA.clockSecs > clockB.clockSecs){
-		return 0;
+// Returns the index of a process in the process table
+int getPidIndex(struct shmseg* shmp, int pid){
+	int i;
+	for (i = 0; i < MAX_PRO; i++){
+		if (shmp->processTable[i].processPid == pid){
+			return i;
+		}
 	}
-	else if (clockA.clockSecs < clockB.clockSecs){
-		return -1;
-	}
-	else if (clockA.clockNS > clockB.clockNS){
-		return 0;
-	}
-	else {
-		return -1;
-	}
+	printf("Error: getPidIndex: %d\n", pid);
+	exit(-1);
 }

@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall
-DEPS = descriptor.h descriptor.c queue.h queue.c structs.h userprocess.c oss.h oss.c
-OBJ = descriptor.o queue.o userprocess.o oss.o
+DEPS = clock.h clock.c descriptor.h descriptor.c queue.h queue.c structs.h userprocess.c oss.h oss.c
+OBJ = clock.o descriptor.o queue.o userprocess.o oss.o
 
 all: oss userprocess
 
