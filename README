@@ -2,8 +2,9 @@ Hanzhe Huang
 12/01/2021
 Project 5
 
-Logfile:
-The logfile stores the allocation matrix every 20 successful allocations.
+Logfile Info & Description:
+The logfile stores the allocation matrix for the current processes for every 20 successful allocations.
+The resource management is done through message queues and shared memory interactions.
 
 Usage:
 ./oss
@@ -11,7 +12,8 @@ Usage:
 Files:
 oss.c, oss.h, clock.c, clock.h, descriptor.c, descriptor.h, queue.c, queue.h, structs.h, userprocess.c, makefile, logfile(generated), README
 
-
+Incomplete:
+Deadlock avoidance algorithm.
 
 
 References:
