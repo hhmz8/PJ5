@@ -27,6 +27,9 @@ struct descriptor {
 // Process control block
 struct shmseg {
 	char buf[BUF_SIZE];
+
+	// Test Count
+	int numberProcesses;
    
 	// Clock
 	struct clock ossclock;

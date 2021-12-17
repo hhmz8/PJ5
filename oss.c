@@ -81,7 +81,11 @@ int main(int argc, char** argv) {
 		perror("Error: msgget");
 		exit(-1);
 	}
-
+	if (msgctl(msgid, IPC_RMID, NULL) == -1) {
+		perror("Error: msgctl");
+		exit(-1);
+	}
+	msgid = msgget(MSG_KEY, 0666 | IPC_CREAT);
 	/*
 	freeResource(shmp, RES_SIZE, MAX_PRO, 0);
 	printDescriptor(fptr,shmp,RES_SIZE,MAX_PRO);
@@ -98,6 +102,12 @@ int main(int argc, char** argv) {
 			}
 		}
 		if (i != MAX_PRO && (isClockLarger(shmp->ossclock, lastNewProcessTime) == 0) && processNum < TOTAL_PRO){
+			if (msgrcv(msgid, &msg_t, sizeof(msg_t), 3, IPC_NOWAIT) != -1 && processNum > 17){
+				waitpid(-1, NULL, 0);
+			}
+			else if (processNum > 17){
+				break;
+			}
 			idle = 0;
 			pid = fork();
 			switch ( pid )
@@ -112,7 +122,12 @@ int main(int argc, char** argv) {
 
 			default: // Parent
 				// Increment total processes created
+				shmp->numberProcesses++;
 				processNum++;
+				printf("%d\n",shmp->numberProcesses);
+				if (shmp->numberProcesses > 18){
+					exit(-1);
+				}
 				if (maxTimeBetweenNewProcsSecs != 0){
 					lastNewProcessTime.clockSecs = shmp->ossclock.clockSecs + (rand() % maxTimeBetweenNewProcsSecs);
 				}
@@ -310,6 +325,7 @@ struct shmseg* shmobj(){
 // Initializes shared memory segment
 void initshmobj(struct shmseg* shmp){
 	int i;
+	shmp->numberProcesses = 0;
 	shmp->ossclock.clockSecs = 0;
 	shmp->ossclock.clockNS = 0;
 	for (i = 0; i < MAX_PRO; i++){

@@ -1,6 +1,9 @@
+Redo:
+Fixed fork error for more than 18 forked processes, changes are reflected at the Git Repo
+
 Hanzhe Huang
-12/01/2021
-Project 5
+12/15/2021
+Project 6
 
 Logfile Info & Description:
 The logfile stores the allocation matrix for the current processes for every 20 successful allocations.
@@ -29,4 +32,4 @@ https://stackoverflow.com/questions/8623131/why-is-rand-not-so-random-after-fork
 
 
 Git Repository:
-https://github.com/hhmz8/PJ5
+https://github.com/hhmz8/PJ6

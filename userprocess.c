@@ -10,6 +10,7 @@ userprocess.c
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <sys/types.h>
+#include <signal.h>
 #include <sys/msg.h>
 #include <time.h>
 #include <ctype.h> //isprint
@@ -94,10 +95,23 @@ int main(int argc, char** argv){
 			}
 		}
 		if (isClockLarger(shmp->ossclock, terminationTime) == 0 && hasResources == 0){
+			// Set message
+			msg_t.mtype = 3;
+			msg_t.pid = pid;
+				
+			// Send message
+			msgsnd(msgid, &msg_t, sizeof(msg_t), 0);
+				
 			printf("P%d exited at time %d:%d.\n", pidIndex, shmp->ossclock.clockSecs, shmp->ossclock.clockNS);
 			shmp->processTable[pidIndex].processPid = 0;
-			exit(-1);
+			shmp->numberProcesses--;
+			kill(pid, SIGKILL);
+			exit(0);
 		}
 	}
-	return 0;
+	
+	//shm
+	shmp->numberProcesses--;
+	kill(pid, SIGKILL);
+	exit(0);
 }
